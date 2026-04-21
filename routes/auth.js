@@ -20,7 +20,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const otp = parseInt(otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false }), 10);
+    const otp = parseInt(otpGenerator.generate(6, { lowerCaseAlphabets: false, upperCaseAlphabets: false, specialChars: false }), 10);
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     console.log('Creating user...');
