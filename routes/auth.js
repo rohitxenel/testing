@@ -17,7 +17,26 @@ router.post('/register', async (req, res) => {
 
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      if (userExists.isVerified) {
+        return res.status(400).json({ message: 'User already exists' });
+      } else {
+        // Resend OTP for unverified user
+        const otp = parseInt(otpGenerator.generate(6, { lowerCaseAlphabets: false, upperCaseAlphabets: false, specialChars: false }), 10);
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        userExists.otp = otp;
+        userExists.otpExpires = otpExpires;
+        await userExists.save();
+
+        try {
+          await sendOTP(email, otp);
+        } catch (sendError) {
+          console.error('OTP send error:', sendError.message);
+          return res.status(500).json({ message: 'Failed to send OTP. Please try again later.' });
+        }
+
+        return res.status(200).json({ message: 'OTP sent to your email. Please verify to complete registration.' });
+      }
     }
 
     const otp = parseInt(otpGenerator.generate(6, { lowerCaseAlphabets: false, upperCaseAlphabets: false, specialChars: false }), 10);
